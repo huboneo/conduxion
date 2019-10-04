@@ -1,22 +1,23 @@
 import {Middleware} from 'redux';
 
-import {ConsequenceAPI, ConsequenceGetter} from './types/consequence.type';
+import {ConsequenceAPI, ConsequenceGetter} from './types';
+import {ConduxionAction} from '../types/conduxion-action.type';
 
-export default function createConsequenceMiddleware<State extends object, Dependencies extends object>(
-    consequenceGetter: ConsequenceGetter<State, Dependencies>,
+export default function createConsequenceMiddleware<State extends object, A extends ConduxionAction<State, Dependencies>, Dependencies extends object>(
+    consequenceGetter: ConsequenceGetter<State, A, Dependencies>,
     dependencies: Dependencies
 ): Middleware {
     return ({dispatch, getState}) => next => action => {
         next(action);
 
-        const api: ConsequenceAPI<State, Dependencies> = {
+        const api: ConsequenceAPI<State, A, Dependencies> = {
             action,
             dispatch,
             getState,
             dependencies
         };
 
-        for (const consequence of consequenceGetter(api)) {
+        for (const consequence of consequenceGetter(action)) {
             consequence({
                 ...api,
                 dispatch: a =>

@@ -1,31 +1,32 @@
-import {ActionCreator} from './types/creator.type';
 import {
+    ActionCreator,
     Action,
     ActionType,
     ActionState,
     ActionPayload,
-    ActionDeps
-} from './types/action.type';
-import {ActionReducer} from './types/action-reducer.type';
-import {Consequence} from './types/consequence.type';
+    ActionDeps,
+    ActionReducer,
+    Consequence,
+    ActionGuard
+} from './types';
 
 type CreatorBlueprint<A extends Action<string, any, any, any>> = {
     type: ActionType<A>
     reducer: ActionReducer<ActionState<A>, ActionPayload<A>>
     isError?: boolean
-    consequence?: Consequence<ActionState<A>, ActionDeps<A>>
+    consequence?: Consequence<ActionState<A>, A, ActionDeps<A>>
 }
 
-export default function conduxionFactory<A extends Action<string, any, any, any>>(
+export default function actionCreatorFactory<A extends Action<any, any, any, any>>(
     blueprint: CreatorBlueprint<A>
-) {
+): [ActionCreator<A>, ActionGuard<A>] {
     const {type, reducer, isError, consequence} = blueprint;
 
     if (consequence) {
         consequence.displayName = type;
     }
 
-    const creator = (payload => ({
+    const actionCreator = (payload => ({
         type,
         payload,
         ...(reducer && {
@@ -39,10 +40,10 @@ export default function conduxionFactory<A extends Action<string, any, any, any>
         })
     })) as ActionCreator<A>;
 
-    creator.actionType = blueprint.type;
+    actionCreator.actionType = blueprint.type;
 
-    const guard = (action: Action<string, any, any, any>): action is A =>
+    const actionGuard: ActionGuard<A> = (action): action is A =>
         action.type === (type as string);
 
-    return <const>[creator, guard];
+    return [actionCreator, actionGuard];
 };
