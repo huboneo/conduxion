@@ -6,19 +6,19 @@ import {
     ActionPayload,
     ActionDeps
 } from './types/action.type';
-import {ReducerType} from './types/reducer.type';
+import {ActionReducer} from './types/action-reducer.type';
 import {Consequence} from './types/consequence.type';
 
 type CreatorBlueprint<A extends Action<string, any, any, any>> = {
     type: ActionType<A>
-    reducer: ReducerType<ActionState<A>, ActionPayload<A>>
+    reducer: ActionReducer<ActionState<A>, ActionPayload<A>>
     isError?: boolean
     consequence?: Consequence<ActionState<A>, ActionDeps<A>>
 }
 
-export const conduxionFactory = <A extends Action<string, any, any, any>>(
+export default function conduxionFactory<A extends Action<string, any, any, any>>(
     blueprint: CreatorBlueprint<A>
-) => {
+) {
     const {type, reducer, isError, consequence} = blueprint;
 
     if (consequence) {

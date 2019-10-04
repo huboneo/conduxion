@@ -1,3 +1,3 @@
-import {Action} from '../lib/types/action.type';
+import {Action} from '../core';
 
-export type ConduxionActionMould<T extends string, P, S extends object, D extends object> = Action<T, P, S, D>
+export type ConduxionActionMould<Type extends string, Payload, State extends object, Dependencies extends object> = Action<Type, Payload, State, Dependencies>

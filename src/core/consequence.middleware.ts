@@ -1,14 +1,15 @@
-import {ConsequenceAPI, ConsequenceGetter} from './types/consequence.type';
 import {Middleware} from 'redux';
 
-export const createConsequenceMiddleware = <S extends object, D extends object>(
-    consequenceGetter: ConsequenceGetter<S, D>,
-    dependencies: D
-): Middleware => {
+import {ConsequenceAPI, ConsequenceGetter} from './types/consequence.type';
+
+export default function createConsequenceMiddleware<State extends object, Dependencies extends object>(
+    consequenceGetter: ConsequenceGetter<State, Dependencies>,
+    dependencies: Dependencies
+): Middleware {
     return ({dispatch, getState}) => next => action => {
         next(action);
 
-        const api: ConsequenceAPI<S, D> = {
+        const api: ConsequenceAPI<State, Dependencies> = {
             action,
             dispatch,
             getState,

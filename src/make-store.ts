@@ -1,23 +1,20 @@
-import {createStore, compose, applyMiddleware} from 'redux';
+import {createStore, applyMiddleware, Store} from 'redux';
 
-import {ConsequenceGetter} from './lib/types/consequence.type';
-import {MakeProdStoreOpts, MakeStoreOpts, RootReducer} from './types/make-store.type';
-import {ConduxionAction} from './types';
+import {ConduxionAction, MakeStoreOpts, RootReducer} from './types';
 
-import createActionLogMiddleware from './lib/action-log';
-import {createConsequenceMiddleware} from './lib/consequence';
+import {createConsequenceMiddleware, ConsequenceGetter} from './core';
 
-export function makeStore<S extends object, A extends ConduxionAction<S, D>, D extends object>(rootReducer: RootReducer<S, A, D>, opts: MakeStoreOpts<S, A, D> = {}) {
+export function makeStore<State extends object, A extends ConduxionAction<State, Dependencies>, Dependencies extends object>(rootReducer: RootReducer<State, A, Dependencies>, initialState: State, opts: MakeStoreOpts<State, Dependencies> = {}): Store<State, A> {
     const {
-        initialState,
-        actionLog,
-        dependencies = {} as D, // @todo: fix typing
+        additionalMiddleware = [],
+        dependencies = {} as Dependencies, // @todo: fix typing
         initConsequence,
         consequenceGetter: theirGetter
     } = opts;
-    const middlewares = [];
-    const consequenceGetter: ConsequenceGetter<S, D> = (api) => {
-        if (theirGetter) return theirGetter(api);
+    const consequenceGetter: ConsequenceGetter<State, Dependencies> = (api) => {
+        if (theirGetter) {
+            return theirGetter(api);
+        }
 
         const {action} = api;
 
@@ -27,62 +24,14 @@ export function makeStore<S extends object, A extends ConduxionAction<S, D>, D e
 
         return [];
     };
-
-    if (consequenceGetter) {
-        middlewares.push(createConsequenceMiddleware<S, D>(consequenceGetter, dependencies));
-    }
-    if (actionLog) {
-        middlewares.push(createActionLogMiddleware<A>(actionLog));
-    }
-
-    const enhancers = [applyMiddleware(...middlewares)];
-    const devToolsExtension = (window as any).__REDUX_DEVTOOLS_EXTENSION__;
-
-    if (typeof devToolsExtension === 'function') {
-        enhancers.push(devToolsExtension());
-    }
-
+    const middleware = [
+        ...additionalMiddleware,
+        createConsequenceMiddleware<State, Dependencies>(consequenceGetter, dependencies)
+    ];
     const store = createStore(
         rootReducer,
         initialState,
-        compose(...enhancers)
-    );
-
-    if (initConsequence) {
-        // @todo: fix typing
-        const initAction: any = {
-            type: '__APP_INIT__',
-            consequence: initConsequence
-        };
-
-        store.dispatch(initAction);
-    }
-
-    return store;
-}
-
-export function makeProdStore<S extends object, A extends ConduxionAction<S, D>, D extends object>(rootReducer: RootReducer<S, A, D>, opts: MakeProdStoreOpts<S, D> = {}) {
-    const {
-        initialState,
-        dependencies = {} as D, // @todo: fix typing
-        initConsequence,
-        consequenceGetter: theirGetter
-    } = opts;
-    const consequenceGetter: ConsequenceGetter<S, D> = (api) => {
-        if (theirGetter) return theirGetter(api);
-
-        const {action} = api;
-
-        if (action.consequence) {
-            return Array.isArray(action.consequence) ? action.consequence : [action.consequence];
-        }
-
-        return [];
-    };
-    const store = createStore(
-        rootReducer,
-        initialState,
-        applyMiddleware(createConsequenceMiddleware<S, D>(consequenceGetter, dependencies))
+        applyMiddleware(...middleware)
     );
 
     if (initConsequence) {

@@ -1,16 +1,17 @@
-import {ReducerType} from './reducer.type';
+import {ActionReducer} from './action-reducer.type';
 import {Consequence} from './consequence.type';
 
-export interface Action<T extends string,
-    P,
-    S extends object,
-    D extends object> {
-    type: T
+export interface Action<
+    Type extends string,
+    Payload,
+    State extends object,
+    Dependencies extends object> {
+    type: Type
     error?: boolean
     sender?: string
-    reducer?: ReducerType<S, P>
-    payload: P
-    consequence?: Consequence<S, D>
+    reducer?: ActionReducer<State, Payload>
+    payload: Payload
+    consequence?: Consequence<State, Dependencies>
 }
 
 export type ActionType<A> = A extends Action<infer T, any, any, any> ? T : never

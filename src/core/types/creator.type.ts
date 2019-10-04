@@ -1,5 +1,5 @@
 import {Action, ActionPayload, ActionType, ActionState} from './action.type';
-import {ReducerType} from './reducer.type';
+import {ActionReducer} from './action-reducer.type';
 
 export type ActionCreator<A extends Action<string, any, any, any>> = ActionPayload<A> extends undefined
     ? NakedActionCreator<A>
@@ -14,7 +14,7 @@ export interface PayloadActionCreator<A extends Action<string, any, any, any>>
     (payload: ActionPayload<A>): {
         type: ActionType<A>
         payload: ActionPayload<A>
-        reducer: ReducerType<ActionState<A>, ActionPayload<A>>
+        reducer: ActionReducer<ActionState<A>, ActionPayload<A>>
     }
 }
 
@@ -22,6 +22,6 @@ export interface NakedActionCreator<A extends Action<string, undefined, any, any
     (): {
         type: ActionType<A>
         payload: undefined
-        reducer: ReducerType<ActionState<A>, ActionPayload<A>>
+        reducer: ActionReducer<ActionState<A>, ActionPayload<A>>
     }
 }
