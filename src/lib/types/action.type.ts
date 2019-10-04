@@ -10,7 +10,7 @@ export interface Action<T extends string,
     sender?: string
     reducer?: ReducerType<S, P>
     payload: P
-    cons?: Consequence<S, D>
+    consequence?: Consequence<S, D>
 }
 
 export type ActionType<A> = A extends Action<infer T, any, any, any> ? T : never

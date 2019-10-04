@@ -3,7 +3,7 @@ import {Action} from './action.type';
 export type ConsequenceAPI<S extends object, D extends object> = {
     dispatch: (action: Action<string, any, S, D>) => void
     getState: () => S
-    deps: D
+    dependencies: D
     action: Action<string, any, S, D>
 }
 

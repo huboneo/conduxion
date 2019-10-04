@@ -13,16 +13,16 @@ type CreatorBlueprint<A extends Action<string, any, any, any>> = {
     type: ActionType<A>
     reducer: ReducerType<ActionState<A>, ActionPayload<A>>
     isError?: boolean
-    cons?: Consequence<ActionState<A>, ActionDeps<A>>
+    consequence?: Consequence<ActionState<A>, ActionDeps<A>>
 }
 
 export const conduxionFactory = <A extends Action<string, any, any, any>>(
     blueprint: CreatorBlueprint<A>
 ) => {
-    const {type, reducer, isError, cons} = blueprint;
+    const {type, reducer, isError, consequence} = blueprint;
 
-    if (cons) {
-        cons.displayName = type;
+    if (consequence) {
+        consequence.displayName = type;
     }
 
     const creator = (payload => ({
@@ -34,8 +34,8 @@ export const conduxionFactory = <A extends Action<string, any, any, any>>(
         ...(isError && {
             error: true
         }),
-        ...(cons && {
-            cons
+        ...(consequence && {
+            consequence
         })
     })) as ActionCreator<A>;
 

@@ -2,8 +2,8 @@ import {ConsequenceAPI, ConsequenceGetter} from './types/consequence.type';
 import {Middleware} from 'redux';
 
 export const createConsequenceMiddleware = <S extends object, D extends object>(
-    consGetter: ConsequenceGetter<S, D>,
-    deps: D
+    consequenceGetter: ConsequenceGetter<S, D>,
+    dependencies: D
 ): Middleware => {
     return ({dispatch, getState}) => next => action => {
         next(action);
@@ -12,16 +12,16 @@ export const createConsequenceMiddleware = <S extends object, D extends object>(
             action,
             dispatch,
             getState,
-            deps
+            dependencies
         };
 
-        for (const cons of consGetter(api)) {
-            cons({
+        for (const consequence of consequenceGetter(api)) {
+            consequence({
                 ...api,
                 dispatch: a =>
                     dispatch({
                         ...a,
-                        sender: `CONSEQUENCE(${cons.displayName || cons.name})`
+                        sender: `CONSEQUENCE(${consequence.displayName || consequence.name})`
                     })
             });
         }
