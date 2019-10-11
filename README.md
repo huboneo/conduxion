@@ -1,175 +1,258 @@
 # Conduxion
 A small API extracting the goodness of https://github.com/edumentab/talks-redux-patterns by [@krawaller](https://github.com/krawaller).
 
-## Table of Contents
+```typescript
+import {actionCreatorFactory} from 'conduxion'
+import produce from 'immer'
 
+import {AppActionMould} from '../../../state.types';
+
+import {STATE_KEY} from '../authentication.state';
+import {setAppError} from '../../ui';
+
+type SetIsAuthenticatedPayload = {
+    isAuthenticated: boolean
+}
+
+export type SetIsAuthenticatedAction = AppActionMould<'SET_IS_AUTHENTICATED', SetIsAuthenticatedPayload>
+
+export const [setIsAuthenticated, isSetIsAuthenticated] = actionCreatorFactory<SetIsAuthenticatedAction>({
+     type: 'SET_IS_AUTHENTICATED',
+     reducer (state, payload) {
+         const {isAuthenticated} = payload;
+    
+         return produce(state, draft => {
+             draft[STATE_KEY].isAuthenticated = isAuthenticated;
+         })
+     },
+     consequence({action, dispatch}) {
+         const {isAuthenticated} = action.payload;
+         
+         if (!isAuthenticated) {
+             dispatch(setAppError('Not authenticated'));
+             return;
+         }
+     }
+});
+```
+
+## Table of Contents
+- [Philosophy](#philosophy)
+- [Installation](#installation)
+- [Usage](#usage)
+- [API](#api)
+- [Types](#types)
 
 ## Philosophy
 An alternative approach to redux where we put actions first, and view state as a consequence of them.
 
-Instead of creating singleton reduces responsible for a vertical, we create reducers for each individual action.
+Instead of creating singleton reducers responsible for a single state slice, we create reducers for each individual action that can act on the entire state.
 
-Should an action have consequences, they should be declared on the action itself (as an event-emitter).
+Should an action have consequences, they are declared on the action itself (as an event-emitter).
 
-### Installation
+## Installation
 ```
 $ npm i -S conduxion
 ```
 Please note that [`redux`](https://www.npmjs.com/package/redux) is a peer-dependency.
 
-### Basic usage
-Vanilla JS
-```typescript
-import {makeStore, actionCreatorFactory} from 'conduxion';
+## Usage
 
-const initialAppState = {
-    time: null
-}
+### Creating a store
+Using pre-fab factories.
 
-export const [initApp, isInitApp] = actionCreatorFactory({
-  type: 'INIT_APP',
-  reducer: (state, payload) => {
-    const { time } = payload
-    
-    return {
-        ...state,
-        time
-    }
-  }
-})
-const rootReducer = (state, action) => action.reducer
-    ? action.reducer(state, action.payload)
-    : state;
-
-const store = makeStore(
- rootReducer,
- initialAppState,
- {
-     initConsequence: ({dispatch}) => dispatch(initApp())
- }
-)
-```
-
-Typescript
 ```typescript
 import {Store} from 'redux';
-import {makeStore, actionCreatorFactory, ConduxionAction, ConduxionActionMould} from 'conduxion';
+import {makeStore, RootReducer, ConduxionAction} from 'conduxion';
 
-type AppState = { time: number | null }
+type AppState = {
+    // whatever you want
+    [key: string]: any
+}
 type AppDependencies = {}
 type AppAction = ConduxionAction<AppState, AppDependencies>
-type AppActionMould<Type extends string, Payload> = ConduxionActionMould<
-  Type,
-  Payload,
-  AppState,
-  AppDependencies
->
+const INITIAL_APP_STATE: AppState = {}
 
-type InitAppPayload = {
-  time: number
-}
-
-type InitAppAction = AppActionMould<'INIT_APP', InitAppPayload>
-
-const initialAppState: AppState = {
-    time: null
-}
-
-export const [initApp, isInitApp] = actionCreatorFactory<InitAppAction>({
-  type: 'INIT_APP',
-  reducer: (state, payload) => {
-    const { time } = payload
-    
-    return {
-        ...state,
-        time
-    }
-  }
-})
-const rootReducer = (state, action) => action.reducer
+const rootReducer: RootReducer<AppState, AppAction, AppDependencies> = (state = INITIAL_APP_STATE, action) => action.reducer
     ? action.reducer(state, action.payload)
     : state;
 
 const store: Store<AppState, AppAction> = makeStore<AppState, AppAction, AppDependencies>(
- rootReducer,
- initialAppState,
- {
-     initConsequence: ({dispatch}) => dispatch(initApp())
- }
-)
+    rootReducer,
+    INITIAL_APP_STATE
+);
+
+export default store;
 ```
 
-### API
-#### makeStore
-A pre-fab redux store creator for simpler use-cases.
-See [MakeStoreOptions](#makestoreoptions) for configuration.
-```TypeScript
+For your convenience, we also expose a dev version that automatically connects to [Redux DevTools](https://github.com/reduxjs/redux-devtools) 
+
+```typescript
 import {Store} from 'redux';
-import {ConduxionAction, RootReducer, MakeStoreOptions} from 'conduxion';
+import {createActionLogMiddleware, makeDevStore, RootReducer, ConduxionAction} from 'conduxion';
 
-function makeStore<State extends object, A extends ConduxionAction<State, Dependencies>, Dependencies extends object>(
-    rootReducer: RootReducer<State, A, Dependencies>,
-    initialState: State,
-    options: MakeStoreOptions<State, Dependencies> = {}
-): Store<State, A>;
-```
-Returns a redux store instance with middleware added.
-
-#### actionCreatorFactory
-A pre-fab redux store creator for simpler use-cases.
-See [MakeStoreOptions](#makestoreoptions) for configuration.
-```TypeScript
-import {Store} from 'redux';
-import {ConduxionAction, RootReducer, MakeStoreOptions} from 'conduxion';
-
-function makeStore<State extends object, A extends ConduxionAction<State, Dependencies>, Dependencies extends object>(
-    rootReducer: RootReducer<State, A, Dependencies>,
-    initialState: State,
-    options: MakeStoreOptions<State, Dependencies> = {}
-): Store<State, A>;
-```
-Returns a redux store instance with middleware added.
-
-### Types
-Below are the main types exposed
-- [MakeStoreOptions](#makestoreoptions)
-- [Action](#action)
-- [ActionReducer](#actionreducer)
-- [Consequences](#consequence)
-
-#### MakeStoreOptions:
-Configuration options for [makeStore](#makestore).
-
-```TypeScript
-import {Middleware} from 'redux';
-import { Consequence, ConsequenceGetter} from 'conduxion';
-
-type MakeStoreOptions<State extends object, Dependencies extends object> = {
-    additionalMiddleware?: Middleware[]
-    dependencies?: Dependencies
-    consequenceGetter?: ConsequenceGetter<State, Dependencies>
-    initConsequence?: Consequence<State, Dependencies>
+type AppState = {
+    // whatever you want
+    [key: string]: any
 }
+type AppDependencies = {}
+type AppAction = ConduxionAction<AppState, AppDependencies>
+
+const INITIAL_APP_STATE: AppState = {}
+
+const rootReducer: RootReducer<AppState, AppAction, AppDependencies> = (state = INITIAL_APP_STATE, action) => action.reducer
+    ? action.reducer(state, action.payload)
+    : state;
+
+const actionLog: any[] = [];
+
+const store: Store<AppState, AppAction> = makeDevStore<AppState, AppAction, AppDependencies>(
+    rootReducer,
+    INITIAL_APP_STATE,
+    {
+        // createActionLogMiddleware mutates actionLog with each action fired
+        additionalMiddleware: [createActionLogMiddleware(actionLog)]
+    }
+);
+
+export default store;
 ```
 
-#### RootReducer:
-A redux root reducer with support for conduxion [Actions](#actions)
+### Creating an action
+Using the [actionCreatorFactory()](#actioncreatorfactory) factory function.
 
-```Typescript
-import {ConduxionAction} from 'conduxion';
+```typescript
+import {actionCreatorFactory, ConduxionActionMould} from 'conduxion'
 
-export type RootReducer<State extends object, A extends ConduxionAction<State, Dependencies>, Dependencies extends object> = (state: State | undefined, action: A) => State;
+import {AppState, AppDependencies} from '../somewhere'
+import {setAppError} from '../somewhere-else'
+
+type AppActionMould<T extends string, P> = ConduxionActionMould<
+    T,
+    P,
+    AppState,
+    AppDependencies
+>
+
+type SetIsAuthenticatedPayload = {
+    isAuthenticated: boolean
+}
+
+export type SetIsAuthenticatedAction = AppActionMould<'SET_IS_AUTHENTICATED', SetIsAuthenticatedPayload>
+
+export const [setIsAuthenticated, isSetIsAuthenticated] = actionCreatorFactory<SetIsAuthenticatedAction>({
+    type: 'SET_IS_AUTHENTICATED',
+    // optional
+    reducer: (state, payload) => {
+        const {isAuthenticated} = payload;
+
+        return {
+            ...state,
+            isAuthenticated
+        }
+    },
+    // optional
+    consequence({action, dispatch}) {
+         const {isAuthenticated} = action.payload;
+         
+         if (!isAuthenticated) {
+             dispatch(setAppError('Not authenticated'));
+             return;
+         }
+    }
+});
 ```
 
-#### Action:
-A redux action with a little extra.
+## API
+- [makeStore](#makestore)
+- [makeDevStore](#makedevstore)
+- [actionCreatorFactory](#actionCreatorFactory)
 
-```Typescript
-import {Consequence, ActionReducer} from 'conduxion';
+### makeStore
+Creates a conduxion redux store with consequence middleware applied.
+
+```typescript
+import {Store} from 'redux'
+import {ConduxionAction, RootReducer, MakeStoreOptions} from 'conduxion';
+
+export function makeStore<State extends object, A extends ConduxionAction<State, Dependencies>, Dependencies extends object>(
+    rootReducer: RootReducer<State, A, Dependencies>,
+    initialState: State,
+    opts: MakeStoreOptions<State, Dependencies> = {}
+): Store<State, A>;
+```
+
+### makeDevStore
+Creates a conduxion redux store with consequence middleware as well as [Redux DevTools](https://github.com/reduxjs/redux-devtools) middleware applied.
+
+```typescript
+import {Store} from 'redux'
+import {ConduxionAction, RootReducer, MakeStoreOptions} from 'conduxion';
+
+export function makeStore<State extends object, A extends ConduxionAction<State, Dependencies>, Dependencies extends object>(
+    rootReducer: RootReducer<State, A, Dependencies>,
+    initialState: State,
+    opts: MakeStoreOptions<State, Dependencies> = {}
+): Store<State, A>;
+```
+
+### actionCreatorFactory
+Factory function returning an [ActionCreator](#actioncreator) and [ActionGuard](#actionguard) for a gived redux action.
+```typescript
+import {
+    Action,
+    ActionType,
+    ActionReducer,
+    ActionState,
+    ActionPayload,
+    Consequence,
+    ActionDeps,
+    ConduxionAction,
+    ActionCreator,
+    ActionGuard
+} from 'conduxion'
+
+type CreatorBlueprint<A extends Action<string, any, any, any>> = {
+    type: ActionType<A>
+    reducer: ActionReducer<ActionState<A>, ActionPayload<A>>
+    isError?: boolean
+    consequence?: Consequence<ActionState<A>, ActionDeps<A>, ActionPayload<A>>
+}
+
+export default function actionCreatorFactory<A extends ConduxionAction<any, any>>(
+    blueprint: CreatorBlueprint<A>
+): [ActionCreator<A>, ActionGuard<A>]
+``` 
+
+## Types
+There are a lot of types exposed by conduxion, here are a few of them. Please see [the root types](./src/types) as well as [the core types](./src/core/types) for a comprehensive list.
+- [RootReducer](#rootreducer)
+- [Action](#action)
+- [Consequence](#consequence)
+- [ConduxionActionMould](#conduxionactionmould)
+- [MakeStoreOptions](#makestoreoptions)
+
+### RootReducer
+Redux root reducer for conduxion.
+
+```typescript
+import {ConduxionAction} from 'conduxion'
+
+export type RootReducer<
+    State extends object,
+    A extends ConduxionAction<State, Dependencies>,
+    Dependencies extends object
+> = (state: State | undefined, action: A) => State;
+```
+
+### Action
+The base interface for all conduxion actions. Enables use of [consequence methods](#consequence).
+```typescript
+import {ActionReducer, Consequence} from 'conduxion';
 
 export interface Action<
     Type extends string,
-    Payload,
+    Payload extends any,
     State extends object,
     Dependencies extends object> {
     type: Type
@@ -177,141 +260,49 @@ export interface Action<
     sender?: string
     reducer?: ActionReducer<State, Payload>
     payload: Payload
-    consequence?: Consequence<State, Dependencies> | Consequence<State, Dependencies>[]
+    consequence?: Consequence<State, Dependencies, Payload> | Consequence<State, Dependencies, Payload>[]
 }
 ```
 
-However for convenience we expose simpler typings `ConduxionAction` and `ConduxionActionMould`:
-```Typescript
-import {Action} from 'conduxion';
+### Consequence
+An [action](#action) consequence method.
 
-export type ConduxionActionMould<Type extends string, Payload, State extends object, Dependencies extends object> = Action<Type, Payload, State, Dependencies>
+```typescript
+import {ConsequenceAPI} from 'conduxion'
 
-export type ConduxionAction<State extends object, Dependencies extends object> = ConduxionActionMould<string, any, State, Dependencies>
-```
-
-#### ActionReducer:
-A redux reducer.
-
-```Typescript
-export type ActionReducer<State, Action> = (state: State, action: Action) => State
-```
-
-#### Consequence:
-A redux thunk.
-
-```Typescript
-import {Action} from 'conduxion';
-
-export type ConsequenceAPI<State extends object, Dependencies extends object> = {
-    dispatch: (action: Action<string, any, State, Dependencies>) => void
-    getState: () => State
-    dependencies: Dependencies
-    action: Action<string, any, State, Dependencies>
-}
-
-export type Consequence<State extends object, Dependencies extends object> = ((
-    api: ConsequenceAPI<State, Dependencies>
+export type Consequence<State extends object, Dependencies extends object, Payload extends any = any> = ((
+    api: ConsequenceAPI<State, Dependencies, Payload>
 ) => void) & {
     name: string,
     displayName?: string
 }
-
-export type ConsequenceGetter<State extends object, Dependencies extends object> = (
-    api: ConsequenceAPI<State, Dependencies>
-) => Consequence<State, Dependencies>[]
 ```
 
+### ConduxionActionMould
+Generic representation of a conduxion action.
 
-
-
-### Advanced usage
 ```typescript
-import {createStore, applyMiddleware, Store} from 'redux';
-import {
-    createConsequenceMiddleware,
-    actionCreatorFactory,
-    RootReducer,
-    MakeStoreOpts,
-    ConduxionAction,
-    ConduxionActionMould,
-    ConsequenceGetter
-} from 'conduxion';
+import {Action} from 'conduxion';
 
-type AppState = { time: number | null}
-type AppDependencies = {}
-type AppAction = ConduxionAction<AppState, AppDependencies>
-type AppActionMould<Type extends string, Payload> = ConduxionActionMould<
-  Type,
-  Payload,
-  AppState,
-  AppDependencies
->
+export type ConduxionActionMould<
+    Type extends string,
+    Payload,
+    State extends object,
+    Dependencies extends object
+> = Action<Type, Payload, State, Dependencies>
+```
 
-type InitAppPayload = {
-  time: number
-}
+### MakeStoreOptions
+Additional configuration for [makeStore](#makestore) and [makeDevStore](#makedevstore).
 
-type InitAppAction = AppActionMould<'INIT_APP', InitAppPayload>
+```typescript
+import {Middleware} from 'redux';
+import {ConsequenceGetter, Consequence} from 'conduxion';
 
-const initialAppState: AppState = {
-    time: null
-}
-
-export const [initApp, isInitApp] = actionCreatorFactory<InitAppAction>({
-  type: 'INIT_APP',
-  reducer: (state, payload) => {
-    const { time } = payload
-    
-    return {
-        ...state,
-        time
-    }
-  }
-})
-const rootReducer = (state, action) => action.reducer
-    ? action.reducer(state, action.payload)
-    : state;
-
-const store: Store<AppState, AppAction> = makeStore<AppState, AppAction, AppDependencies>(
-     rootReducer,
-     initialAppState
-)
-
-function makeStore(rootReducer: RootReducer<AppStore, AppAction, AppDependencies>, initialState: AppStore, opts: MakeStoreOpts<AppStore, AppDependencies> = {}) {
-    const {
-        additionalMiddleware = [],
-        dependencies = {},
-        initConsequence
-    } = opts;
-    const consequenceGetter: ConsequenceGetter<AppStore, AppDependencies> = (api) => {
-        const {action} = api;
-
-        if (action.consequence) {
-            return Array.isArray(action.consequence) ? action.consequence : [action.consequence];
-        }
-
-        return [];
-    };
-    const middleware = [
-        ...additionalMiddleware,
-        createConsequenceMiddleware<AppStore, AppDependencies>(consequenceGetter, dependencies)
-    ];
-    const store = createStore(
-        rootReducer,
-        initialState,
-        applyMiddleware(...middleware)
-    );
-
-    if (initConsequence) {
-        const initAction: AppAction = {
-            type: '__APP_INIT__',
-            consequence: initConsequence
-        };
-
-        store.dispatch(initAction);
-    }
-
-    return store;
+export type MakeStoreOptions<State extends object, Dependencies extends object> = {
+    additionalMiddleware?: Middleware[]
+    dependencies?: Dependencies
+    consequenceGetter?: ConsequenceGetter<State, Dependencies>
+    initConsequence?: Consequence<State, Dependencies>
 }
 ```
