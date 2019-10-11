@@ -1,19 +1,19 @@
 import {Action} from './action.type';
 
-export type ConsequenceAPI<State extends object, A extends Action<any, any, State, Dependencies> , Dependencies extends object> = {
-    dispatch: (action: Action<string, any, State, Dependencies>) => void
+export type ConsequenceAPI<State extends object, Dependencies extends object, Payload extends any = any, Type extends string = string> = {
+    dispatch: (action: Action<Type, any, State, Dependencies>) => void
     getState: () => State
     dependencies: Dependencies
-    action: A
+    action: Action<any, Payload, State, Dependencies> // @todo: fix typings
 }
 
-export type Consequence<State extends object, A extends Action<any, any, State, Dependencies>, Dependencies extends object> = ((
-    api: ConsequenceAPI<State, A, Dependencies>
+export type Consequence<State extends object, Dependencies extends object, Payload extends any = any> = ((
+    api: ConsequenceAPI<State, Dependencies, Payload>
 ) => void) & {
     name: string,
     displayName?: string
 }
 
-export type ConsequenceGetter<State extends object, A extends Action<any, any, any, any>, Dependencies extends object> = (
-    api: ConsequenceAPI<State, A, Dependencies>
-) => Consequence<State, A, Dependencies>[]
+export type ConsequenceGetter<State extends object, Dependencies extends object> = (
+    api: ConsequenceAPI<State, Dependencies>
+) => Consequence<State, Dependencies>[]
