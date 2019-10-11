@@ -16,7 +16,7 @@ export default function createConsequenceMiddleware<State extends object, Depend
             dependencies
         };
 
-        for (const consequence of consequenceGetter(action)) {
+        for (const consequence of consequenceGetter(api)) {
             consequence({
                 ...api,
                 dispatch: a =>
