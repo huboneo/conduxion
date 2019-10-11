@@ -18,7 +18,7 @@ export type SetIsAuthenticatedAction = AppActionMould<'SET_IS_AUTHENTICATED', Se
 
 export const [setIsAuthenticated, isSetIsAuthenticated] = actionCreatorFactory<SetIsAuthenticatedAction>({
      type: 'SET_IS_AUTHENTICATED',
-     reducer (state, payload) {
+     reducer(state, payload) {
          const {isAuthenticated} = payload;
     
          return produce(state, draft => {
@@ -143,7 +143,7 @@ export type SetIsAuthenticatedAction = AppActionMould<'SET_IS_AUTHENTICATED', Se
 export const [setIsAuthenticated, isSetIsAuthenticated] = actionCreatorFactory<SetIsAuthenticatedAction>({
     type: 'SET_IS_AUTHENTICATED',
     // optional
-    reducer: (state, payload) => {
+    reducer(state, payload) {
         const {isAuthenticated} = payload;
 
         return {
