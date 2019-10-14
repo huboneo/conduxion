@@ -48,7 +48,7 @@ export const [setIsAuthenticated, isSetIsAuthenticated] = actionCreatorFactory<S
 ## Philosophy
 An alternative approach to redux where we put actions first, and view state as a consequence of them.
 
-Instead of creating singleton reducers responsible for a single state slice, we create reducers for each individual action that can act on the entire state.
+Instead of creating singleton reducers responsible for a single state slice, we create reducers for each individual action that can act across the entire state.
 
 Should an action have consequences, they are declared on the action itself (as an event-emitter).
 
