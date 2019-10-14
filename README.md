@@ -1,4 +1,6 @@
 # Conduxion
+**Con**~~sequential~~ ~~re~~**dux** ~~act~~**ion**~~s~~
+
 A small API extracting the goodness of https://github.com/edumentab/talks-redux-patterns by [@krawaller](https://github.com/krawaller).
 
 ```typescript
