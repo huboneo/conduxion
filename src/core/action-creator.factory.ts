@@ -13,7 +13,7 @@ import {ConduxionAction} from '../types/conduxion-action.type';
 
 type CreatorBlueprint<A extends Action<string, any, any, any>> = {
     type: ActionType<A>
-    reducer: ActionReducer<ActionState<A>, ActionPayload<A>>
+    reducer?: ActionReducer<ActionState<A>, ActionPayload<A>>
     isError?: boolean
     consequence?: Consequence<ActionState<A>, ActionDeps<A>, ActionPayload<A>>
 }
