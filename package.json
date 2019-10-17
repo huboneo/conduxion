@@ -1,9 +1,17 @@
 {
     "name": "conduxion",
     "version": "1.0.5",
-    "description": "",
+    "description": "Consequential Redux Actions",
+    "keywords": [
+        "redux",
+        "consequence",
+        "typescript",
+        "state",
+        "state management"
+    ],
     "main": "./dist/index.js",
     "types": "./dist/index.d.ts",
+    "repository": "https://github.com/huboneo/conduxion",
     "scripts": {
         "clean": "rimraf dist",
         "test": "jest",
